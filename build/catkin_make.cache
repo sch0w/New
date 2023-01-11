@@ -1,0 +1,2 @@
+assignment
+-DCATKIN_DEVEL_PREFIX=/home/ubuntu/Desktop/New/devel -DCMAKE_INSTALL_PREFIX=/home/ubuntu/Desktop/New/install -G Unix Makefiles
