@@ -1,7 +1,11 @@
 # **Robot Programming Assignment**
 *Author: Sean Chow*
 
-*Date: 11/1/2023*
+*Date: 12/1/2023*
+
+Version: 1.1
+
+Note: bunch_counter is the newer version with redesigned opencv, and is overall simplified but involves calling grape_detection.py, and bunch_counter is the backup version.
 
 ## **Introduction**
 This workspace contains an autonomous robot simulation of an agricultural robot (Thorvald) in a virtual vineyard envroment.
