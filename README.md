@@ -1,5 +1,6 @@
 # **Robot Programming Assignment**
-*Author: Sean Chow         Date: 11/1/2023*
+*Author: Sean Chow*
+*Date: 11/1/2023*
 
 ## **Introduction**
 This workspace contains an autonomous robot simulation of an agricultural robot (Thorvald) in a virtual vineyard envroment.
