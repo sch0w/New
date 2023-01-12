@@ -1,10 +1,11 @@
 
 import math
+from tf.transformations import euler_from_quaternion
+
 
 
 
 class Navigation:
-    
     
     # Looks towards homing beacon position
     def look_towards(des_pos):
