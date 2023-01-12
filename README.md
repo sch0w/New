@@ -107,23 +107,31 @@ This will position the Thorvald robot in the bottom right hand corner near two w
 
 The path planning uses the [BUG2 algorithm](https://automaticaddison.com/the-bug2-algorithm-for-robot-motion-planning/) and a homing beacon system to avoid collisions and get to required points for image taking. 
 
-The algorithm is controlled by being in a series of states `LOOK_TOWARDS`, `GOAL_SEEK`, `WALL_FOLLOW` and `ROTATE_TO_VINES`. 
+The algorithm is controlled by being in one of the following state
 
-1. `LOOK_TOWARDS` - This state rotates the robot towards the `HOMING_BEACON` which can be placed anywhere in the vineyard. Rather than use single end point I have used a series of these to act as points to take images at. Once pointed towards the beacon the robot state will be changed to `GOAL_SEEK`.
+1. `LOOK_TOWARDS` : Rotates Thorvald towards the `Homing_Beacon`
+  - `Homing_Beacon` can be placed anywhere in the map.
+  - This project contains `Homing_Beacon` that points to locations where Thorvald should visit and take photos to count grape bunches
+  - Once pointed towards the beacon the robot state will be changed to `GOAL_SEEK`
 
-1. `GOAL_SEEK` - This moves the robot towards the goal (homing beacon) and if it encounters any obstacle it will change state to `WALL_FOLLOW`. The collision proximity params here are slightly larger than at `WALL_FOLLOW` so we can avoid getting closed into position. 
+1. `GOAL_SEEK` : Moves Thorvald towards the `Homing_Beacon`
+  1. Once encounters obstacle state changes to `WALL_FOLLOW`
+  - The collision proximity params are slightly larger than at `WALL_FOLLOW` to avoid getting trapped 
 
-1. `WALL'_FOLLOW` - This state moves the robot out of a collision area and will keep going until it intersects with the BUG2 `GOAL"_SEEK` line. It will then move to state `LOOK_TOWARDS` to again go to the `HOMING_BEACON`
+1. `WALL_FOLLOW` : Moves Thorvald out of obsticles
+  1. Thorvald will keep moving until it intersects with BUG2's `GOAL"_SEEK` line which it is in line with the next `Homing_Beacon`
+  1. State will update to `LOOK_TOWARDS` to again go locate the `Homing_Beacon`
 
-1. `ROTATE_TO"_VINES` - Once at the goal position, the robot will change state and rotate towards the vines ensuring that the KinectHD camera is facing the vines at 90 degrees (assumes the vine hedge is parallel to the perimeter wall - checks have shown it is)
+1. `ROTATE_TO"_VINES` : Rotate 90 degrees to face vines
+  1. After reaching a goal (`Homing_Beacon`) position, Thorvald will change state to `ROTATE_TO"_VINES` to rotate 90 degrees so the KinectHD camera is directly facing the vines
+  1. State will then change to `TAKE_IMAGE`
 
-1. `TAKE_IMAGE` - Once at the desired position we move to the `TAKE_IMAGE` state where the grape bunch counting process will begin.
-
-Once we are at the correct position and angle to take an image the counting process takes over. 
+1. `TAKE_IMAGE` : Capture image and initiate bunch counting procedure
+  1.This state happens after `ROTATE_TO"_VINES`, which means Thorvald have already reached `Homing_Beacon` and rotated for the camera to face vines directly
 
 ## Grape Bunch Counting Process Overview
 
-The grape bunch counting process is achieved through an imaging pipeline, using OpenCV, as follows:
+The grape bunch counting process is achieved through an imaging pipeline using OpenCV
 
 1. `CV bridge`: Connects/links OpenCV to ROS
 2. `cv2.cvtColor(image, cv2.COLOR_BGR2HSV)`: Convert to HSV image, apply thresholds then mask. A useful threshold tool is the [blob_detector.py](https://github.com/tizianofiorenzani/ros_tutorials/blob/master/opencv/include/blob_detector.py) by Tiziano Fiorenzani.
