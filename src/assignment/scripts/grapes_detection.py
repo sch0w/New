@@ -7,19 +7,29 @@ import rospy
 import cv2
 
 
+def bgr_to_hsv(image):
+    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert color space
+    return hsv_img
+
+def hsv_to_bgr(image):
+    bgr_img = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    return bgr_img
+
+
+
 class image_listener:
 
-    def __init__(self, camera_feed: str):
+    def __init__(self, camera_feed: str, img_taken: bool):
         # Enable OpenCV with ROS
         self.bridge = CvBridge()
-        self.image_counter = 0    # tracks the no of images taken
+        self.image_counter = 0    # tracks the no. of images taken
+        self.img_taken = img_taken
         # Subscribe to front camera feed
-        # "/thorvald_001/kinect2_front_camera/hd/image_color_rect"
         self.image_sub = rospy.Subscriber(camera_feed,
                                           Image, self._handle_feed)
 
     def _handle_feed(self, data):
-
+        """Handles image feed from ROS"""
         try:
             # ROS Image to OpenCV2
             cv2_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -30,39 +40,32 @@ class image_listener:
             self._preprocess_image(cv2_img)
 
     def _preprocess_image(self, cv2_img):
-        img_noBackground = self._remove_background(cv2_img) # remove background on start
-        img_removeVines = self.removeVines(img_noBackground)
-        print("Count of images", self.image_count)
+        img_no_bg = self._remove_background(cv2_img) # remove background on start
+        img_removeVines = self.removeVines(img_no_bg)
+        print("Count of images taken: ", self.image_count)
         self.saveImage(img_removeVines)
     
     
     def _remove_background(self, image):
         # Insp[ired from -> https://github.com/TheMemoryDealer/Robot-Programming-CMP9767M/blob/main/weeder/src/vision.py]
-        HSVimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert color space
+        HSVimage = bgr_to_hsv(image)
         self.saveImage(HSVimage)
         # between values for thresholding
         min = np.array([35, 000, 000]) 
         max = np.array([180, 253, 255]) 
         mask = cv2.inRange(HSVimage, min, max) # threshold
         bunch_image = cv2.bitwise_and(HSVimage, HSVimage, mask=mask) # obtain threshold result
-        im_NoBackground = cv2.cvtColor(bunch_image, cv2.COLOR_HSV2BGR) # reconvert color space for publishing
-        #cv2.imshow("Removed background", im_NoBackground)
-        #cv2.waitKey(0) 
+        im_NoBackground = hsv_to_bgr(bunch_image) # reconvert color space for publishing
         return im_NoBackground
 
 
     def removeVines(self, image):
-        HSVimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)   # convert color space for thresholding
-        #cv2.imshow("HSVImage", HSVimage)
-        #cv2.waitKey(0) 
+        HSVimage = bgr_to_hsv(image)   # convert color space for thresholding
         # mask out vine - values found by using hsv_range_detector.py
         # inspired by https://www.youtube.com/watch?v=We6CQHhhOFo&t=136s  -> ROS and OpenCv for beginners | Blob Tracking and Ball Chasing with Raspberry Pi by Tiziano Fiorenzani
         min = np.array([90, 000, 40])
         max = np.array([255, 255, 255]) 
         vinemask = cv2.inRange(HSVimage, min, max) # threshold
-        #cv2.imshow("vinemask", vinemask)
-        #cv2.waitKey(0) 
-        #self.saveImage(vinemask)
 
         # Remove odd small spots
         # Inspired by -> https://stackoverflow.com/a/42812226
@@ -83,38 +86,26 @@ class image_listener:
                 vinemask_updated[output == i + 1] = 255
 
         vinemask_updated = vinemask_updated.astype(np.uint8) # reconvert to uint8
-        #cv2.imshow("vinemask updated", vinemask_updated)
-        #cv2.waitKey(0) 
 
         # Increase size of remaining pixels
         vinemask_updated = cv2.dilate(vinemask_updated, np.ones((15, 15)), iterations = 1) # expand mask
-        #cv2.imshow("diliated", vinemask_updated)
-        #cv2.waitKey(0) 
 
         # Add kernal to complete the morphEx operation using morph_elispse (simular shape to grapes)
         # Inspired by -> https://www.pyimagesearch.com/2021/04/28/opencv-morphological-operations/
 	    # construct a eliptic kernel (same shape as grapes) from the current size and then apply an "opening" operation to close the gaps
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
         morph_vinemask = cv2.morphologyEx(vinemask_updated, cv2.MORPH_OPEN, kernel)
-        #cv2.imshow("MorphEx vinemask", morph_vinemask)
-        #cv2.waitKey(0)
 
         # obtain threshold result
         grapeBunchImage = cv2.bitwise_and(HSVimage, HSVimage, mask=morph_vinemask) 
-        #cv2.imshow("grapeBunchImage with MorphEx ANDED HSV image", grapeBunchImage)
-        #cv2.waitKey(0) 
 
         # Detect the keypoints of the grape bunches in the image and count them
         im_detectGrapes_with_keypoints, keypoints = self.detectGrapes(grapeBunchImage, morph_vinemask)
-        #cv2.imshow("Final Grape bunch Image", im_detectGrapes_with_keypoints)
-        #cv2.waitKey(0)
-        #self.saveImage(im_detectGrapes_with_keypoints)
         
         return im_detectGrapes_with_keypoints
 
 
     def detectGrapes(self, image, mask):
-        global taken_image
 
         grape_bunch_mask=cv2.bitwise_not(mask) # invert as blob detector will look for black pixels as ours is white
 
@@ -142,9 +133,7 @@ class image_listener:
         grape_bunches_in_image = len(keypoints)
         if(grape_bunches_in_image != 0): # If a blob is detected, print how many there were
             print('Grape bunches = ', grape_bunches_in_image)
-        #cv2.imshow("detect keypoints image", im_with_keypoints)
-        #cv2.waitKey(0)
-        taken_image = True # flags when an image is taken
+        self.img_taken = True   # flags when an image is taken
         return im_with_keypoints, keypoints
 
     def saveImage(self, image):
@@ -153,6 +142,4 @@ class image_listener:
         imagepath = 'src/assignment/images/grape_bunches'+str(time)+'.jpg' 
         print('saving to ',imagepath)
         cv2.imwrite(imagepath, image)
-        
-        #imshow("cv2", image)
         rospy.sleep(1)

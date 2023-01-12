@@ -272,7 +272,10 @@ def bot_bug2():
             rotate_to_vines()
         elif currentBotState is BotState.TAKE_IMAGE:
             print("Taking Image")
-            image_listener()
+            from grapes_detection import image_listener
+            camera_feed_topic = "/thorvald_001/kinect2_front_camera/hd/image_color_rect"
+            imgListener = image_listener(camera_feed_topic, taken_image)
+            taken_image = imgListener.img_taken
             return
         rate.sleep()
     print("Image captured")
