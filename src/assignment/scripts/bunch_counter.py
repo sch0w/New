@@ -3,22 +3,15 @@
 
 import rospy, sys
 from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import LaserScan, Image
+from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-
 from nav_msgs.msg import Odometry
-from std_msgs.msg import String
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from tf.transformations import euler_from_quaternion
+from grapes_detection import ROSFeedHandler
 
 import enum
 import math
 import numpy
-
-from cv_bridge import CvBridge, CvBridgeError
-from datetime import datetime
-from cv2 import namedWindow, cvtColor, imshow, inRange
-
-from subprocess import Popen
 
 # ------------------------------ Initialising and defining varables ------------------------------------
 
@@ -31,6 +24,7 @@ class BotState(enum.Enum):
     WALL_FOLLOW = 2  # Go around the wall / avoid obstacles
     ROTATE_TO_VINES = 3 # Rotate towards vines to caputure camera image
     TAKE_IMAGE = 4 # Capture images along the vines
+
 
 # Initialised values
 yaw = 0
@@ -180,8 +174,6 @@ def rotate_to_vines():
 
     bot_motion.publish(twist)
 
-        
-
 # --------------------------------------------- helper functions --------------------------------------
 
 
@@ -272,10 +264,9 @@ def bot_bug2():
             rotate_to_vines()
         elif currentBotState is BotState.TAKE_IMAGE:
             print("Taking Image")
-            from grapes_detection import image_listener
             camera_feed_topic = "/thorvald_001/kinect2_front_camera/hd/image_color_rect"
-            imgListener = image_listener(camera_feed_topic, taken_image)
-            taken_image = imgListener.img_taken
+            feedHandler = ROSFeedHandler(camera_feed_topic, taken_image)
+            taken_image = feedHandler.img_taken
             return
         rate.sleep()
     print("Image captured")
