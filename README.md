@@ -61,7 +61,7 @@ Fork the contents of this [vineyard_simulation](https://github.com/sch0w/vineyar
 
   Explaination: `assignment` is now a *package* and you have all the files required for this simulation
 
-4. Now that you have all the files required for this simulation. We need to complete the `catkin_make` [process](http://wiki.ros.org/catkin/commands/catkin_make).  `cd ..` out of the folder until you reach the workspace's root file location (~/Desktop/*name_of_your_workspace*). Use `catkin_make` to build your project.
+4. Now that you have all the files required for this simulation. We need to complete the `catkin_make` [process](http://wiki.ros.org/catkin/commands/catkin_make).  `cd ..` out of the folder until you reach the workspace's root file location (`~/Desktop/name_of_your_workspace`). Use `catkin_make` to build your project.
 
 - To ensure the new files are recognised type `roslaunch` , double tab and it should show the package `assignment` as an option. Double tab again and you should see the launch file `launcher.launch`.
 
