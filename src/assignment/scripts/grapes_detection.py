@@ -16,6 +16,25 @@ def hsv_to_bgr(image):
     return bgr_img
 
 
+def apply_bitwise_and(image, mask):
+    img_bitwise = cv2.bitwise_and(image, image, mask=mask) 
+    return img_bitwise
+
+
+def detect_keypoints_blob(mask):
+    # REF: https://www.learnopencv.com/blob-detection-using-opencv-python-c/
+    # Guide: https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs 
+    # Note: Thorvlad has to stand off so grape bunches are at the image border - this impacts pixel masking params aswell
+    params = cv2.SimpleBlobDetector_Params() # initialize detection parameters
+    # REF: https://programmerall.com/article/3089974703/  
+    params.maxArea = 100000
+    params.minInertiaRatio = 0.05
+    params.minConvexity = .60
+    # Create a detector with the parameters
+    detector = cv2.SimpleBlobDetector_create(params)
+    # Detect blobs
+    return detector.detect(mask)
+
 
 class image_listener:
 
@@ -41,7 +60,7 @@ class image_listener:
 
     def _preprocess_image(self, cv2_img):
         img_no_bg = self._remove_background(cv2_img) # remove background on start
-        img_removeVines = self.removeVines(img_no_bg)
+        img_removeVines = self._remove_vines(img_no_bg)
         print("Count of images taken: ", self.image_count)
         self.saveImage(img_removeVines)
     
@@ -54,12 +73,12 @@ class image_listener:
         min = np.array([35, 000, 000]) 
         max = np.array([180, 253, 255]) 
         mask = cv2.inRange(HSVimage, min, max) # threshold
-        bunch_image = cv2.bitwise_and(HSVimage, HSVimage, mask=mask) # obtain threshold result
+        bunch_image = apply_bitwise_and(HSVimage, mask)  # obtain threshold result
         im_NoBackground = hsv_to_bgr(bunch_image) # reconvert color space for publishing
         return im_NoBackground
 
 
-    def removeVines(self, image):
+    def _remove_vines(self, image):
         HSVimage = bgr_to_hsv(image)   # convert color space for thresholding
         # mask out vine - values found by using hsv_range_detector.py
         # inspired by https://www.youtube.com/watch?v=We6CQHhhOFo&t=136s  -> ROS and OpenCv for beginners | Blob Tracking and Ball Chasing with Raspberry Pi by Tiziano Fiorenzani
@@ -86,7 +105,6 @@ class image_listener:
                 vinemask_updated[output == i + 1] = 255
 
         vinemask_updated = vinemask_updated.astype(np.uint8) # reconvert to uint8
-
         # Increase size of remaining pixels
         vinemask_updated = cv2.dilate(vinemask_updated, np.ones((15, 15)), iterations = 1) # expand mask
 
@@ -97,44 +115,25 @@ class image_listener:
         morph_vinemask = cv2.morphologyEx(vinemask_updated, cv2.MORPH_OPEN, kernel)
 
         # obtain threshold result
-        grapeBunchImage = cv2.bitwise_and(HSVimage, HSVimage, mask=morph_vinemask) 
-
+        grapeBunchImage = apply_bitwise_and(HSVimage, morph_vinemask) 
         # Detect the keypoints of the grape bunches in the image and count them
-        im_detectGrapes_with_keypoints, keypoints = self.detectGrapes(grapeBunchImage, morph_vinemask)
-        
-        return im_detectGrapes_with_keypoints
+        grapes_with_kps = self._detect_grapes(grapeBunchImage, morph_vinemask)
+        return grapes_with_kps
 
-
-    def detectGrapes(self, image, mask):
+    def _detect_grapes(self, image, mask):
 
         grape_bunch_mask=cv2.bitwise_not(mask) # invert as blob detector will look for black pixels as ours is white
-
         # create the small border around the image. As the robot will move forwards down the row then don't catch the right border
         # because the the nexct image the left border will catch any overlap and register it (hopefully!!)
         # If the robot is too close this will work and if far enough away the border wont be required top/bottom
         # Guide: https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs
         grape_bunch_mask=cv2.copyMakeBorder(grape_bunch_mask, top=1, bottom=1, left=1, right=0, borderType= cv2.BORDER_CONSTANT, value=[255,255,255] ) 
-
-        # REF: https://www.learnopencv.com/blob-detection-using-opencv-python-c/
-        # Guide: https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs 
-        # Note: Thorvlad has to stand off so grape bunches are at the image border - this impacts pixel masking params aswell
-        params = cv2.SimpleBlobDetector_Params() # initialize detection parameters
-        # REF: https://programmerall.com/article/3089974703/  
-        params.maxArea = 100000
-        params.minInertiaRatio = 0.05
-        params.minConvexity = .60
-        # Create a detector with the parameters
-        detector = cv2.SimpleBlobDetector_create(params)
-        # Detect blobs
-        keypoints = detector.detect(grape_bunch_mask)
+        keypoints = detect_keypoints_blob(grape_bunch_mask)
         # Draw detected blobs as red circles. cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
         im_with_keypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (000,000,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        #Counts number of grape bunches(keypoint) in image
-        grape_bunches_in_image = len(keypoints)
-        if(grape_bunches_in_image != 0): # If a blob is detected, print how many there were
-            print('Grape bunches = ', grape_bunches_in_image)
+        print('Grape bunches detected: ', len(keypoints))
         self.img_taken = True   # flags when an image is taken
-        return im_with_keypoints, keypoints
+        return im_with_keypoints
 
     def saveImage(self, image):
         # Save OpenCV2 image as jpeg 
