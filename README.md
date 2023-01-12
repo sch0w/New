@@ -25,7 +25,7 @@ This program is designed and tested in the docker image provided in [https://git
 
 2. Follow the [docker image installation guide](https://github.com/LCAS/CMP9767M/wiki/using-the-module-resources-in-docker#using-the-modules-docker-image)
 
-### **Windows** (Tested on both HyverV and WSL2)
+### **Windows** (Tested in docker desktop on both HyverV and WSL2)
 ### [System requirements for docker desktop](https://docs.docker.com/desktop/install/windows-install/)
 - 64 bit processor with Second Level Address Translation (SLAT)
 - 4GB system RAM
