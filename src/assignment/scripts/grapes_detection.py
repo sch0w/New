@@ -8,15 +8,18 @@ import cv2
 
 
 def bgr_to_hsv(image):
-    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert color space
+    """converts color space from BGR to HSV"""
+    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     return hsv_img
 
 def hsv_to_bgr(image):
+    """converts color space from HSV to BGR"""
     bgr_img = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     return bgr_img
 
 
 def apply_bitwise_and(image, mask):
+    """apply bitwise and to the input image and mask"""
     img_bitwise = cv2.bitwise_and(image, image, mask=mask) 
     return img_bitwise
 
@@ -36,7 +39,7 @@ def detect_keypoints_blob(mask):
     return detector.detect(mask)
 
 
-class image_listener:
+class ROSFeedHandler:
 
     def __init__(self, camera_feed: str, img_taken: bool):
         # Enable OpenCV with ROS
@@ -66,7 +69,7 @@ class image_listener:
     
     
     def _remove_background(self, image):
-        # Insp[ired from -> https://github.com/TheMemoryDealer/Robot-Programming-CMP9767M/blob/main/weeder/src/vision.py]
+        # Inspired by -> https://github.com/TheMemoryDealer/Robot-Programming-CMP9767M/blob/main/weeder/src/vision.py
         HSVimage = bgr_to_hsv(image)
         self.saveImage(HSVimage)
         # between values for thresholding
@@ -78,6 +81,21 @@ class image_listener:
         return im_NoBackground
 
 
+    def _compute_vine_mask(self, ref_image, n_comp, sizes):
+        # minimum size of particles we want to keep (number of pixels)
+        #here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
+        min_size = 60 # Value found through trial and error - since we are donig this pre dilation we need ot pick up smaller elements
+        mask = np.zeros((ref_image.shape))
+        # keep component only if it's above min_size
+        for i in range(n_comp):
+            if sizes[i] >= min_size:
+                mask[ref_image == i + 1] = 255
+        mask = mask.astype(np.uint8) # reconvert to uint8
+        # Increase size of remaining pixels
+        mask = cv2.dilate(mask, np.ones((15, 15)), iterations = 1) # expand mask
+        return mask
+
+
     def _remove_vines(self, image):
         HSVimage = bgr_to_hsv(image)   # convert color space for thresholding
         # mask out vine - values found by using hsv_range_detector.py
@@ -85,35 +103,21 @@ class image_listener:
         min = np.array([90, 000, 40])
         max = np.array([255, 255, 255]) 
         vinemask = cv2.inRange(HSVimage, min, max) # threshold
-
         # Remove odd small spots
         # Inspired by -> https://stackoverflow.com/a/42812226
         dummy_image = vinemask.astype(np.uint8) # reconvert to uint8
         #find all your connected components (white blobs in your image)
-        nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(dummy_image, connectivity=8)
+        nb_components, components, stats, _ = cv2.connectedComponentsWithStats(dummy_image, connectivity=8)
         #connectedComponentswithStats yields every seperated component with information on each of them, such as size
         #the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
         sizes = stats[1:, -1]; nb_components = nb_components - 1
-        # minimum size of particles we want to keep (number of pixels)
-        #here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
-        min_size = 60 # Value found through trial and error - since we are donig this pre dilation we need ot pick up smaller elements
         #answer image
-        vinemask_updated = np.zeros((output.shape))
-        #for every component in the image, you keep it only if it's above min_size
-        for i in range(0, nb_components):
-            if sizes[i] >= min_size:
-                vinemask_updated[output == i + 1] = 255
-
-        vinemask_updated = vinemask_updated.astype(np.uint8) # reconvert to uint8
-        # Increase size of remaining pixels
-        vinemask_updated = cv2.dilate(vinemask_updated, np.ones((15, 15)), iterations = 1) # expand mask
-
+        vinemask_updated = self._compute_vine_mask(components, nb_components, sizes)
         # Add kernal to complete the morphEx operation using morph_elispse (simular shape to grapes)
         # Inspired by -> https://www.pyimagesearch.com/2021/04/28/opencv-morphological-operations/
 	    # construct a eliptic kernel (same shape as grapes) from the current size and then apply an "opening" operation to close the gaps
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
-        morph_vinemask = cv2.morphologyEx(vinemask_updated, cv2.MORPH_OPEN, kernel)
-
+        elliptic_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        morph_vinemask = cv2.morphologyEx(vinemask_updated, cv2.MORPH_OPEN, elliptic_kernel)
         # obtain threshold result
         grapeBunchImage = apply_bitwise_and(HSVimage, morph_vinemask) 
         # Detect the keypoints of the grape bunches in the image and count them
