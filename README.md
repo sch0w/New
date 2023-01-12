@@ -26,7 +26,7 @@ This program is designed and tested in the docker image provided in [https://git
 2. Follow the [docker image installation guide](https://github.com/LCAS/CMP9767M/wiki/using-the-module-resources-in-docker#using-the-modules-docker-image)
 
 ### **Windows** (Tested on both HyverV and WSL2)
-### [System requirements for docker desktop](https://docs.docker.com/desktop/install/windows-install/)###
+### [System requirements for docker desktop](https://docs.docker.com/desktop/install/windows-install/)
 - 64 bit processor with Second Level Address Translation (SLAT)
 - 4GB system RAM
 - BIOS-level hardware virtualization support must be enabled in the BIOS settings
@@ -45,7 +45,7 @@ This program is designed and tested in the docker image provided in [https://git
 4. Please follow the [docker image installation guide](https://github.com/LCAS/CMP9767M/wiki/using-the-module-resources-in-docker#using-the-modules-docker-image)
 
 ## Install docker image
-[Docker image installation guide](https://github.com/LCAS/CMP9767M/wiki/using-the-module-resources-in-docker#using-the-modules-docker-image)**
+[Docker image installation guide](https://github.com/LCAS/CMP9767M/wiki/using-the-module-resources-in-docker#using-the-modules-docker-image)
 
 *Tip: At the end of the work, don't forget to stop the container again. Press [ctrl-C] to stop docker compose, and to be sure, run `docker-compose down` afterwards to prevent your container using up unnecessary resources*
 
