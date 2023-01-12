@@ -66,14 +66,10 @@ target = -90 # Target angle is 90 degree (To directly face vines)
 #Smoother (kp) prevents overshooting by slowing down rotation the closer it is from the target
 kp=0.5 # Slows angle of rotation the closer it is from the desired angle 
 
-<<<<<<< HEAD
 # image counter variable
 image_count = 0
 
 # ------------- Navigation -------------
-=======
-# ---------------------------------------- Navigation --------------------------------------
->>>>>>> 291308a87ce0c81aeb1878f1e5798a47e53675d2
 
 # Looks towards homing beacon position
 def look_towards(des_pos):
@@ -279,20 +275,12 @@ def bot_bug2():
             rotate_to_vines()
         elif currentBotState is BotState.TAKE_IMAGE:
             print("Taking Image")
-<<<<<<< HEAD
             image_capture()
-=======
-            from grapes_detection import image_listener
-            camera_feed_topic = "/thorvald_001/kinect2_front_camera/hd/image_color_rect"
-            imgListener = image_listener(camera_feed_topic, taken_image)
-            taken_image = imgListener.img_taken
->>>>>>> 291308a87ce0c81aeb1878f1e5798a47e53675d2
             return
         rate.sleep()
     print("Image captured")
 
 
-<<<<<<< HEAD
 # ------------- ported imaging class and functions -------------
 #Ref: https://github.com/garry-clawson/robot_programming
 class image_capture:
@@ -446,9 +434,6 @@ class image_capture:
 
 
 # ------------- main program -------------
-=======
-# --------------------------------------------- main program --------------------------------------
->>>>>>> 291308a87ce0c81aeb1878f1e5798a47e53675d2
 
 def init():
     global homing_signal
