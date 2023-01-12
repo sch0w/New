@@ -74,7 +74,7 @@ To launch Thorvald, type the following in the terminal:
 1. `rosrun grape_bunch_counter homing_beacon.py`
   * use `cd scripts` to locate your scripts folder and type `source devel/setup.bash` if the launch folder is not located/executable.
 
-This calls the package and associated launch and .py files. The `homing_beacon.py` file can only start a few seconds after the launch file to ensure that the sensors in Gazebo(for docker the page in localhost:6080) are fully initialized and Thorvald is taking readings. The launch file itself is very simple and consists of two simple components along with additional launch parameters:
+This calls the package and associated launch and `.py` files. The `homing_beacon.py` file can only start a few seconds after the launch file to ensure that the sensors in Gazebo(for docker the page in localhost:6080) are fully initialized and Thorvald is taking readings. The launch file itself is very simple consisting two simple components along with additional launch parameters:
 
 - Node details for relevent .py files
 
