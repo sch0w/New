@@ -115,7 +115,7 @@ def goal_seek():
         twist.linear.x = 1
     bot_motion.publish(twist)
 
-# Comment:
+
 # Avoids obsticales with BUG2 algorithm, follows walls using the beacon as the target
 # Depending on the rotation of the vines this maybe useful to spawn the robot perpendicular to the vines and have the target point behind them. 
 # This way the robot will navigate fully around each vine row 
@@ -159,9 +159,9 @@ def wall_follow():
 def rotate_to_vines():
     print("rotating to vines")
     global bot_motion, twist, bot_pose, target, currentBotState, yaw_threshold, facing_vines
-    #bot_motion = rospy.Publisher("/thorvald_001/teleop_joy/cmd_vel", Twist, queue_size=10)
+    bot_motion = rospy.Publisher("/thorvald_001/teleop_joy/cmd_vel", Twist, queue_size=10)
     target_rad = target*math.pi/180 #-90 degrees to face towards vines
-    #print("bot pose", bot_pose)
+    print("bot pose", bot_pose)
     # Change bot pose from Quarternion to euler to get the yaw and difference to target (-90 degrees)
     quaternion = (
         bot_pose.orientation.x,
@@ -213,12 +213,6 @@ def callback(msg):
     check_init_config()
     rospy.wait_for_message("homing_signal", PoseStamped)
 
-#def callback_2(msg):
-#    global beacon_pose
-#    beacon_pose = msg.pose
-#    check_init_config()
-#    rospy.wait_for_message("homing_signal_2", PoseStamped)
-
 # Bot pose position relative to homing beacon
 def get_base_truth(bot_data):
     global bot_pose, beacon_found, goal_distance_threshold, currentBotState
@@ -237,21 +231,6 @@ def get_base_truth(bot_data):
 def process_sensor_info(data):
     global maxRange, minRange, front_obs_distance, left_obs_distance, zone_R, zone_FR, zone_F, zone_FL, zone_L
     
-    # Testing print outs
-    #maxRange = data.range_max
-    #print("maxRange", maxRange)
-    #minRange = data.range_min
-    #print("minRange", minRange)
-
-
-    # The range split is currently at uneven angles. We could use >> 'zone = numpy.array_split(numpy.array(data.ranges), 5)' and split into 5 equal zones?
-    # However, there are 720 data.ranges. This is defined in the sensors URDF folder for the Hokuya camera (bacchus_sensors.xacro file - line 29,30), which
-    # holds the args that are pulled through via the launch file. These can be changed to: min_angle="-0.7854" and max_angle="2.3562" respectivly
-    # The front camera on the Thorvald is offset by 45 degrees so doesn't detect within a range - I think this is because if you set the range from
-    # -180 to 180, you have a gap at between the front and back camera (must be because the cameras are mounted back to back and obviously not ontop of one another
-    # For me to use data ranges I will need to amend the front sensor URDF folder to adjust for the 45 degree offset so the front zones are actually the front laser scans
-    # A benefit to splitting the laserscan into zones is you can get a narrow field of view if going down tight tunnels with larger forward zone and smaller side zones
-    # However, a downside I have seen through testing is that the robot can get caught looping around the same 'avoid' route - never crashing but never taking a risk either! Come on Thorvald!!
 
     zone = numpy.array(data.ranges) 
     zone_R = zone[0:143] 
@@ -300,7 +279,7 @@ def bot_bug2():
             image_listener()
             return
         rate.sleep()
-    #print("Image captured")
+    print("Image captured")
 
 
 # --------------------------------------------- ported imaging class and functions --------------------------------------
@@ -317,7 +296,7 @@ class image_listener:
     def image_callback(self, data):
 
         global image_count #Counts the number of images taken
-        #print("Received an image!")
+        print("Received an image!")
 
         try:
             # Convert your ROS Image message to OpenCV2
@@ -328,8 +307,8 @@ class image_listener:
             img_noBackground = self.removeBackGround(cv2_img) # remove background on start
             img_removeVines = self.removeVines(img_noBackground)
             image_count = image_count + 1
-            #print("Count of images", image_count)
-            #self.saveImage(img_removeVines)
+            print("Count of images", image_count)
+            self.saveImage(img_removeVines)
             return
 
     def removeBackGround(self, image):
@@ -338,7 +317,7 @@ class image_listener:
         HSVimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert color space
         #cv2.imshow("initial image", HSVimage)
         #cv2.waitKey(0) 
-        #self.saveImage(HSVimage)
+        self.saveImage(HSVimage)
         # between values for thresholding
         min = numpy.array([35, 000, 000]) 
         max = numpy.array([180, 253, 255]) 
@@ -361,7 +340,7 @@ class image_listener:
         vinemask = cv2.inRange(HSVimage, min, max) # threshold
         #cv2.imshow("vinemask", vinemask)
         #cv2.waitKey(0) 
-        #self.saveImage(vinemask)
+        self.saveImage(vinemask)
 
         # Remove odd small spots
         # Inspired by -> https://stackoverflow.com/a/42812226
@@ -456,8 +435,6 @@ class image_listener:
         rospy.sleep(1)
 
 
-
-
 # --------------------------------------------- main program --------------------------------------
 
 def init():
@@ -465,8 +442,6 @@ def init():
     rospy.init_node("branchcounter.py")
 
     homing_signal = rospy.Subscriber('/homing_signal', PoseStamped, callback)
-
-    #homing_signal_2 = rospy.Subscriber('/homing_signal_2', PoseStamped, callback_2)
 
     rospy.Subscriber('/thorvald_001/front_scan', LaserScan, process_sensor_info)
     rospy.Subscriber('/thorvald_001/odometry/base_raw', Odometry, get_base_truth)
