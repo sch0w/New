@@ -32,7 +32,6 @@ class BotState(enum.Enum):
     WALL_FOLLOW = 2  # Go around the wall / avoid obstacles
     ROTATE_TO_VINES = 3 # Rotate towards vines to caputure camera image
     TAKE_IMAGE = 4 # Capture images along the vines
-    #SECOND_BEACON = 5 # New beacon loaction for further images
 
 # Initialised values
 yaw = 0
@@ -53,7 +52,7 @@ init_config_complete = False
 wall_hit_point = None
 beacon_found = False
 taken_image = False
-#second_beacon = False
+
 twist = Twist()
 distance_moved = 0
 
@@ -102,7 +101,7 @@ def goal_seek():
     global zone_F, zone_FL, zone_FR, currentBotState, bot_pose, wall_hit_point, front_obs_distance, left_obs_distance
 
     # Avoiding obsticles
-    obstacle_in_front = numpy.any((zone_F < 1.5)) or numpy.any((zone_FR < 1.5)) or numpy.any((zone_FL < 1.5)) 
+    obstacle_in_front = numpy.any((zone_F < 2)) or numpy.any((zone_FR < 2)) or numpy.any((zone_FL < 2)) 
     # distance of 1.5 is the lowest it should get to move safely around the wall with a 2m offset
     # once we are in a line distance position. 1m is the lowest and with trials Thorvald's side corners got caught on the hedge when the becaon is positioned very close to it
     # Or find the minimum value in this zone. or maybe numpy.any would be faster
@@ -450,9 +449,9 @@ class image_listener:
     def saveImage(self, image):
         # Save OpenCV2 image as jpeg 
         time = datetime.now()
-        filepath = 'grape_bunches'+str(time)+'.jpg' 
-        print('saving to ',filepath)
-        cv2.imwrite(filepath, image)
+        imagepath = 'src/assignment/images/grape_bunches'+str(time)+'.jpg' 
+        print('saving to ',imagepath)
+        cv2.imwrite(imagepath, image)
         #imshow("cv2", image)
         rospy.sleep(1)
 
