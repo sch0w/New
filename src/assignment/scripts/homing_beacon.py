@@ -9,7 +9,7 @@ def talker():
     rospy.init_node('homing_beacon', anonymous=False)
     rate = rospy.Rate(10) # 10hz
 
-    print("-------- Homing beacon initiated ----------")
+    print("Successfully initiated Homing Beacon")
 
     home_pose = PoseStamped()
     home_pose.header.frame_id = "thorvald_001/odometry/base_raw"
