@@ -52,7 +52,7 @@ This program is designed and tested in the docker image provided in [https://git
 
 ## Create a catkin workspace
 
-1. Create a catkin workspace by following the [ROS catkin tutorials](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)in your `~/Desktop` location.
+1. Create a catkin workspace in your `~/Desktop` location by following the [ROS catkin tutorials](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)
 
 2. Copy the `LCAS/CMP9767M` project into your workspace's `/src` folder (`name_of_your_workspace/src`)
 
