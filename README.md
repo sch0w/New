@@ -47,7 +47,7 @@ This program is designed and tested in the docker image provided in [https://git
 ## Install docker image
 [Docker image installation guide](https://github.com/LCAS/CMP9767M/wiki/using-the-module-resources-in-docker#using-the-modules-docker-image)
 
-*Tip: At the end of the work, don't forget to stop the container again. Press [ctrl-C] to stop docker compose, and to be sure, run `docker-compose down` afterwards to prevent your container using up unnecessary resources*
+*Tip: At the end of the work, press [ctrl-C] to stop docker-compose (to stop the container), and to be sure, run `docker-compose down` afterwards to prevent the container using up unnecessary resources*
 
 
 ## Create a catkin workspace
