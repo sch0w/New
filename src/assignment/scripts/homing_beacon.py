@@ -12,12 +12,12 @@ def talker():
     print("-------- Homing beacon initiated ----------")
 
     home_pose = PoseStamped()
-    home_pose.header.frame_id = "thorvald_001/odom"
+    home_pose.header.frame_id = "thorvald_001/odometry/base_raw"
 
     # ROS Parameters
     # Reference on setting params: https://campus-rover.gitbook.io/lab-notebook/faq/using-args-params-roslaunch 
     home_pose.pose.position.x = -8 #UP/DOWN
-    home_pose.pose.position.y = -5 #LEFT/RIGHT
+    home_pose.pose.position.y = -4.5 #LEFT/RIGHT
     home_pose.pose.position.z = 0 #DONT TOUCH
 
     # Publish homing beacon until it is shutdown

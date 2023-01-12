@@ -32,12 +32,14 @@ class image_listener:
     def _preprocess_image(self, cv2_img):
         img_noBackground = self._remove_background(cv2_img) # remove background on start
         img_removeVines = self.removeVines(img_noBackground)
-
+        print("Count of images", self.image_count)
+        self.saveImage(img_removeVines)
     
     
     def _remove_background(self, image):
         # Insp[ired from -> https://github.com/TheMemoryDealer/Robot-Programming-CMP9767M/blob/main/weeder/src/vision.py]
         HSVimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert color space
+        self.saveImage(HSVimage)
         # between values for thresholding
         min = np.array([35, 000, 000]) 
         max = np.array([180, 253, 255]) 
@@ -148,8 +150,9 @@ class image_listener:
     def saveImage(self, image):
         # Save OpenCV2 image as jpeg 
         time = datetime.now()
-        filepath = 'grape_bunches'+str(time)+'.jpg' 
-        print('saving to ',filepath)
-        cv2.imwrite(filepath, image)
+        imagepath = 'src/assignment/images/grape_bunches'+str(time)+'.jpg' 
+        print('saving to ',imagepath)
+        cv2.imwrite(imagepath, image)
+        
         #imshow("cv2", image)
         rospy.sleep(1)
