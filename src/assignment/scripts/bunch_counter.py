@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-
-# Inspired by --> https://github.com/bipul93/ros-bug2/blob/master/scripts/bot.py
+# Reference on bug2 algorithm: https://github.com/bipul93/ros-bug2/blob/master/scripts/bot.py
 
 import rospy, sys
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import LaserScan, Image
 from geometry_msgs.msg import Twist
+
+from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-from nav_msgs.msg import Odometry
+
 import enum
 import math
 import numpy
-#import numpy as np
+
 from cv_bridge import CvBridge, CvBridgeError
 from datetime import datetime
 import cv2
@@ -20,28 +21,29 @@ from cv2 import namedWindow, cvtColor, imshow, inRange
 
 from subprocess import Popen
 
-
-# --------------------------------------------- define variables and initialise --------------------------------------
+# ------------------------------ Initialising and defining varables ------------------------------------
 
 # Defining Bot States
-# We move between these states before we get to our desrired location depending on vineyard and obsticles
+# Robot performs the following states while heading to the desrired location. 
+# The combination may vary depending on the map's size and obsticles
 class BotState(enum.Enum):
-    LOOK_TOWARDS = 0  # rotate bots towards the goal
+    LOOK_TOWARDS = 0  # rotates bot towards goal
     GOAL_SEEK = 1  # follow line
     WALL_FOLLOW = 2  # Go around the wall / avoid obstacles
-    ROTATE_TO_VINES = 3 # Rotate towards vines to take camera image
-    TAKE_IMAGE = 4 # Take images along the vines
-    #SECOND_BEACON = 5 # New beacon loaction to take further images (we can add as many as we like)
+    ROTATE_TO_VINES = 3 # Rotate towards vines to caputure camera image
+    TAKE_IMAGE = 4 # Capture images along the vines
+    #SECOND_BEACON = 5 # New beacon loaction for further images
 
 # Initialised values
 yaw = 0
-yaw_threshold = math.pi / 90 #Set at 90 as this gives 2 degrees tolerence I found due to size of vineyard and testing at far edges 4 degs missed homing spots (could moke homing spot larger (line distance value)? - pros and cons)
+yaw_threshold = math.pi / 90 #Value at 90 gives 2 degrees tolerence. 4 degree tolerence will miss homing spots
 goal_distance_threshold = 0.5
 currentBotState = BotState.LOOK_TOWARDS
 
 # base scan laser range values
 maxRange = 3
 minRange = 0
+
 bot_pose = None
 init_bot_pose = []
 beacon_pose = None
@@ -54,22 +56,24 @@ taken_image = False
 #second_beacon = False
 twist = Twist()
 distance_moved = 0
+
 front_obs_distance = None
 left_obs_distance = None
+
 wall_following = False
 
-#Rotation vairables
-#Target for rotation and smoothing speed (kp) used to slow down the rotation the closer we get to our target
-target = -90 # Target angle to achive ibn degrees (Note: this is the world view and is directly facuing the grape vines)
-kp=0.5 # Slows the angle of rotation the closer you get to the desried angle (stops from overshooting)
+# Rotation vairables
+# Target for rotation
+target = -90 # Target angle is 90 degree (To directly face vines)
+#Smoother (kp) prevents overshooting by slowing down rotation the closer it is from the target
+kp=0.5 # Slows angle of rotationthe closer it is from the desried angle 
 
-# Image couting variables
+# image counter variable
 image_count = 0
 
-# --------------------------------------------- movement functions --------------------------------------
+# ---------------------------------------- Navigation --------------------------------------
 
-
-# Looks towards the homing beacon position
+# Looks towards homing beacon position
 def look_towards(des_pos):
     global yaw, yaw_threshold, bot_motion, currentBotState, twist
     quaternion = (
@@ -85,23 +89,22 @@ def look_towards(des_pos):
     # math.fabs = returns absolute value of a number as a float
     if math.fabs(yaw_diff) > yaw_threshold:
         print("Rads to get to beacon", math.fabs(yaw_diff))
-        twist.angular.z = -0.2 # clockwise rotation if yaw_diff > 0 else 0.5  # counter-clockwise rotation
+        twist.angular.z = -0.2 # clockwise rotation if yaw_diff > 0 else counter-clockwise rotation
 
     if math.fabs(yaw_diff) <= yaw_threshold:
         twist.angular.z = 0
         currentBotState = BotState.GOAL_SEEK
     bot_motion.publish(twist)
 
-# Seeks out the homing beacon and if comes into contact with an obstrucrtion envokes the wall_follow() function (algroythm used is BUG2)
+# Seeks for homing_beacon and if obstruction is faced envoke BUG2's wall_follow() function
 def goal_seek():
     print("goal seek initilised")
     global zone_F, zone_FL, zone_FR, currentBotState, bot_pose, wall_hit_point, front_obs_distance, left_obs_distance
 
-    # Comment:
-    # UIse 1.5 distance here as this allows us to move around the wall with a 2m offset but then gives us change to get closer
-    # once we are in a line distance position. 1m is the lowest  and with trials the robtos corners caught on the hedge
-    # when the becaon is positiohned very close to it (just to see hwo close we can get and also trying to tune the parameters)
-    obstacle_in_front = numpy.any((zone_F < 1.5)) or numpy.any((zone_FR < 1.5)) or numpy.any((zone_FL < 1.5)) #Note that 1.5 is 
+    # Avoiding obsticles
+    obstacle_in_front = numpy.any((zone_F < 1.5)) or numpy.any((zone_FR < 1.5)) or numpy.any((zone_FL < 1.5)) 
+    # distance of 1.5 is the lowest it should get to move safely around the wall with a 2m offset
+    # once we are in a line distance position. 1m is the lowest and with trials Thorvald's side corners got caught on the hedge when the becaon is positioned very close to it
     # Or find the minimum value in this zone. or maybe numpy.any would be faster
     print("obsticle in front?", obstacle_in_front)
     if obstacle_in_front:
@@ -114,17 +117,14 @@ def goal_seek():
     bot_motion.publish(twist)
 
 # Comment:
-# Avoids obsticales and follows walls to the BUG2 algorythm using the beacon as the target to get too
-# Depending on the rottaion of the vines this maybe useful to spawn the robot perpendicular to the vines and have the target
-# point behind them. This way the robot will navigate fully around each vine row 
-# After though - BUG1 would have been better here as it would fully encompas each vine hedge befor going to its nearest jump off point
-# as it moves ot its target (beacon) point - should have thought about that!! 
+# Avoids obsticales with BUG2 algorithm, follows walls using the beacon as the target
+# Depending on the rotation of the vines this maybe useful to spawn the robot perpendicular to the vines and have the target point behind them. 
+# This way the robot will navigate fully around each vine row 
 
 def wall_follow():
     print("wall follow initilised")
     global twist, bot_pose, bot_motion, currentBotState, distance_moved, wall_hit_point
 
-    # Comment: 
     # The distance '<2' should be at least as large as if the robot was inscribed in a circle
     # In Thorvalds instance its rectnagluar in shape so the enscribed circle when rotating about its centre point + some tolerance
     obstacle_in_front = numpy.any((zone_F < 2)) or numpy.any((zone_FR < 2)) or numpy.any((zone_FL < 2))
@@ -245,7 +245,6 @@ def process_sensor_info(data):
     #print("minRange", minRange)
 
 
-    # Comment:
     # The range split is currently at uneven angles. We could use >> 'zone = numpy.array_split(numpy.array(data.ranges), 5)' and split into 5 equal zones?
     # However, there are 720 data.ranges. This is defined in the sensors URDF folder for the Hokuya camera (bacchus_sensors.xacro file - line 29,30), which
     # holds the args that are pulled through via the launch file. These can be changed to: min_angle="-0.7854" and max_angle="2.3562" respectivly
@@ -276,9 +275,8 @@ def check_init_config():
         init_bot_pose = [bot_pose.position.x, bot_pose.position.y]
         bot_bug2()
 
-# Comment:
-# While loop to keep checkuing if we have hit homing position and are facing the vines to takje an image
-# Shifts between states depending upon issues we see - mainly managing obsticles via wall following
+# While loop to keep checking if homing position had been reached, meaning Thorvald is facing the vines ready to capture an image
+# Shifts between states depending upon issues faced - mainly managing obsticles via wall following
 def bot_bug2():
     global bot_motion, currentBotState, bot_pose
     bot_motion = rospy.Publisher("/thorvald_001/teleop_joy/cmd_vel", Twist, queue_size=10)
@@ -418,39 +416,39 @@ class image_listener:
     def detectGrapes(self, image, mask):
         global taken_image
 
-        grape_bunch_mask=cv2.bitwise_not(mask) # invert as blob detector will look for black pixels, ours is white
+        grape_bunch_mask=cv2.bitwise_not(mask) # invert as blob detector will look for black pixels as ours is white
 
         # create the small border around the image. As the robot will move forwards down the row then don't catch the right border
         # because the the nexct image the left border will catch any overlap and register it (hopefully!!)
         # If the robot is too close this will work and if far enough away the border wont be required top/bottom
-        # Inspired by -> https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs
+        # Guide: https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs
         grape_bunch_mask=cv2.copyMakeBorder(grape_bunch_mask, top=1, bottom=1, left=1, right=0, borderType= cv2.BORDER_CONSTANT, value=[255,255,255] ) 
 
-        # FROM -> https://www.learnopencv.com/blob-detection-using-opencv-python-c/
-        # Inspired params from -> https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs 
-        # Note: Need the robot to sdand off so that grape bunches are at the image border - this impacts pixel masking params also!!
+        # REF: https://www.learnopencv.com/blob-detection-using-opencv-python-c/
+        # Guide: https://stackoverflow.com/questions/53064534/simple-blob-detector-does-not-detect-blobs 
+        # Note: Thorvlad has to stand off so grape bunches are at the image border - this impacts pixel masking params aswell
         params = cv2.SimpleBlobDetector_Params() # initialize detection parameters
-        # Inspired by -> https://programmerall.com/article/3089974703/  
+        # REF: https://programmerall.com/article/3089974703/  
         params.maxArea = 100000
         params.minInertiaRatio = 0.05
         params.minConvexity = .60
         # Create a detector with the parameters
         detector = cv2.SimpleBlobDetector_create(params)
-        # Detect blobs.
+        # Detect blobs
         keypoints = detector.detect(grape_bunch_mask)
         # Draw detected blobs as red circles. cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
         im_with_keypoints = cv2.drawKeypoints(image, keypoints, numpy.array([]), (000,000,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        #Counts the number of keypoints (grape bunches) in image
+        #Counts number of grape bunches(keypoint) in image
         grape_bunches_in_image = len(keypoints)
-        if(grape_bunches_in_image != 0): # If a blob is detected, print out how many
+        if(grape_bunches_in_image != 0): # If a blob is detected, print how many there were
             print('Grape bunches = ', grape_bunches_in_image)
         #cv2.imshow("detect keypoints image", im_with_keypoints)
         #cv2.waitKey(0)
-        taken_image = True # flags that we have now taken an image
+        taken_image = True # flags when an image is taken
         return im_with_keypoints, keypoints
 
     def saveImage(self, image):
-        # Save your OpenCV2 image as a jpeg 
+        # Save OpenCV2 image as jpeg 
         time = datetime.now()
         filepath = 'grape_bunches'+str(time)+'.jpg' 
         print('saving to ',filepath)
@@ -461,7 +459,7 @@ class image_listener:
 
 
 
-# --------------------------------------------- main program entry --------------------------------------
+# --------------------------------------------- main program --------------------------------------
 
 def init():
     global homing_signal

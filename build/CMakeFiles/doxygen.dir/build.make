@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ubuntu/Desktop/New/src
+CMAKE_SOURCE_DIR = /home/ubuntu/Desktop/vineyard_simulation/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ubuntu/Desktop/New/build
+CMAKE_BINARY_DIR = /home/ubuntu/Desktop/vineyard_simulation/build
 
 # Utility rule file for doxygen.
 
@@ -67,6 +67,6 @@ CMakeFiles/doxygen.dir/clean:
 .PHONY : CMakeFiles/doxygen.dir/clean
 
 CMakeFiles/doxygen.dir/depend:
-	cd /home/ubuntu/Desktop/New/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/ubuntu/Desktop/New/src /home/ubuntu/Desktop/New/src /home/ubuntu/Desktop/New/build /home/ubuntu/Desktop/New/build /home/ubuntu/Desktop/New/build/CMakeFiles/doxygen.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/ubuntu/Desktop/vineyard_simulation/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/ubuntu/Desktop/vineyard_simulation/src /home/ubuntu/Desktop/vineyard_simulation/src /home/ubuntu/Desktop/vineyard_simulation/build /home/ubuntu/Desktop/vineyard_simulation/build /home/ubuntu/Desktop/vineyard_simulation/build/CMakeFiles/doxygen.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/doxygen.dir/depend
 

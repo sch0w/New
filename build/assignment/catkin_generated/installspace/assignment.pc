@@ -1,8 +1,0 @@
-prefix=/home/ubuntu/Desktop/New/install
-
-Name: assignment
-Description: Description of assignment
-Version: 0.1.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

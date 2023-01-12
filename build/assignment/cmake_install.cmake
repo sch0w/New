@@ -1,8 +1,8 @@
-# Install script for directory: /home/ubuntu/Desktop/New/src/assignment
+# Install script for directory: /home/ubuntu/Desktop/vineyard_simulation/src/assignment
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/ubuntu/Desktop/New/install")
+  set(CMAKE_INSTALL_PREFIX "/home/ubuntu/Desktop/vineyard_simulation/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -35,20 +35,5 @@ endif()
 # Is this installation the result of a crosscompile?
 if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "FALSE")
-endif()
-
-if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/ubuntu/Desktop/New/build/assignment/catkin_generated/installspace/assignment.pc")
-endif()
-
-if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/assignment/cmake" TYPE FILE FILES
-    "/home/ubuntu/Desktop/New/build/assignment/catkin_generated/installspace/assignmentConfig.cmake"
-    "/home/ubuntu/Desktop/New/build/assignment/catkin_generated/installspace/assignmentConfig-version.cmake"
-    )
-endif()
-
-if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/assignment" TYPE FILE FILES "/home/ubuntu/Desktop/New/src/assignment/package.xml")
 endif()
 
