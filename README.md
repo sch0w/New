@@ -123,15 +123,15 @@ The algorithm is controlled by being in one of the following state
   - The collision proximity params are slightly larger than at `WALL_FOLLOW` to avoid getting trapped 
 
 1. `WALL_FOLLOW` : Moves Thorvald out of obsticles
-  1. Thorvald will keep moving until it intersects with BUG2's `GOAL"_SEEK` line which it is in line with the next `Homing_Beacon`
-  1. State will update to `LOOK_TOWARDS` to again go locate the `Homing_Beacon`
+    1. Thorvald will keep moving until it intersects with BUG2's `GOAL"_SEEK` line which it is in line with the next `Homing_Beacon`
+    1. State will update to `LOOK_TOWARDS` to again go locate the `Homing_Beacon`
 
 1. `ROTATE_TO"_VINES` : Rotate 90 degrees to face vines
-  1. After reaching a goal (`Homing_Beacon`) position, Thorvald will change state to `ROTATE_TO"_VINES` to rotate 90 degrees so the KinectHD camera is directly facing the vines
-  1. State will then change to `TAKE_IMAGE`
+    1. After reaching a goal (`Homing_Beacon`) position, Thorvald will change state to `ROTATE_TO"_VINES` to rotate 90 degrees so the KinectHD camera is directly facing the vines
+    1. State will then change to `TAKE_IMAGE`
 
 1. `TAKE_IMAGE` : Capture image and initiate bunch counting procedure
-  1.This state happens after `ROTATE_TO"_VINES`, which means Thorvald have already reached `Homing_Beacon` and rotated for the camera to face vines directly
+    1.This state happens after `ROTATE_TO"_VINES`, which means Thorvald have already reached `Homing_Beacon` and rotated for the camera to face vines directly
 
 ## Grape Bunch Counting Process Overview
 
