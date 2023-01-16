@@ -119,7 +119,7 @@ The algorithm is controlled by being in one of the following state
   - Once pointed towards the beacon the robot state will be changed to `GOAL_SEEK`
 
 1. `GOAL_SEEK` : Moves Thorvald towards the `Homing_Beacon`
-  1. Once encounters obstacle state changes to `WALL_FOLLOW`
+  - Once encounters obstacle state changes to `WALL_FOLLOW`
   - The collision proximity params are slightly larger than at `WALL_FOLLOW` to avoid getting trapped 
 
 1. `WALL_FOLLOW` : Moves Thorvald out of obsticles
@@ -138,7 +138,7 @@ The algorithm is controlled by being in one of the following state
 The grape bunch counting process is achieved through an imaging pipeline using OpenCV
 
 1. `CV bridge`: Connects/links OpenCV to ROS
-2. `cv2.cvtColor(image, cv2.COLOR_BGR2HSV)`: Convert to HSV image, apply thresholds then mask. A useful threshold tool is the [blob_detector.py](https://github.com/tizianofiorenzani/ros_tutorials/blob/master/opencv/include/blob_detector.py) by Tiziano Fiorenzani.
+1. `cv2.cvtColor(image, cv2.COLOR_BGR2HSV)`: Convert to HSV image, apply thresholds then mask. A useful threshold tool is the [blob_detector.py](https://github.com/tizianofiorenzani/ros_tutorials/blob/master/opencv/include/blob_detector.py) by Tiziano Fiorenzani.
 1. Repeat the above process but remove the green vines applying a new threshold
 1. We now have an image with lots of smaller white dots. We need to remove this noise. We used `astype(np.uint8)` to convert to unit8, then `cv2.connectedComponentsWithStats(dummy_image, connectivity=8)` to build a list of centroids of all white dots. We then filter and remove any that are below 60 pixels in size (chosen via trial and error).
 1. `cv2.dilate(vinemask_updated, np.ones((15, 15)), iterations = 1)` was used to [increase the size](https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html) of the mask points. 
