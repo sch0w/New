@@ -127,12 +127,10 @@ def wall_follow():
     # In Thorvalds instance its rectnagluar in shape so the enscribed circle when rotating about its centre point + some tolerance
     obstacle_in_front = numpy.any((zone_F < 2)) or numpy.any((zone_FR < 2)) or numpy.any((zone_FL < 2))
     distance_moved = math.sqrt(pow(bot_pose.position.y - wall_hit_point.y, 2) + pow(bot_pose.position.x - wall_hit_point.x, 2))
-    #print(line_distance(), distance_moved, (line_distance() < 0.2 and distance_moved > 0.5))
-
 
     if line_distance() < 0.2 and distance_moved > 0.5:
         print("line_hit")
-        print(distance_moved)
+        #print(distance_moved)
         # found line point. rotate and move forward via the LOOK_TOWARDS state
         twist.angular.z = 0
         twist.linear.x = 0
@@ -221,7 +219,7 @@ def get_base_truth(bot_data):
 
     if beacon_pose is not None:
         goal_distance = math.sqrt(pow(bot_pose.position.y - beacon_pose.position.y, 2) + pow(bot_pose.position.x - beacon_pose.position.x, 2))
-        # print(goal_distance)
+        print(goal_distance)
         if goal_distance <= goal_distance_threshold:
             currentBotState = BotState.ROTATE_TO_VINES
             beacon_found = True
@@ -313,31 +311,23 @@ class image_capture:
     def removeBackGround(self, image): # Remove background
         # Ref: https://github.com/TheMemoryDealer/Robot-Programming-CMP9767M/blob/main/weeder/src/vision.py]
         HSVimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert color space
-        #cv2.imshow("initial image", HSVimage)
-        #cv2.waitKey(0) 
         self.saveImage(HSVimage)
         # between values for thresholding
         min = numpy.array([35, 000, 000]) 
         max = numpy.array([180, 253, 255]) 
         mask = cv2.inRange(HSVimage, min, max) # threshold
         bunch_image = cv2.bitwise_and(HSVimage, HSVimage, mask=mask) # obtain threshold result
-        im_NoBackground = cv2.cvtColor(bunch_image, cv2.COLOR_HSV2BGR) # reconvert color space for publishing
-        #cv2.imshow("Removed background", im_NoBackground)
-        #cv2.waitKey(0) 
+        im_NoBackground = cv2.cvtColor(bunch_image, cv2.COLOR_HSV2BGR) # reconvert color space for publishing 
         return im_NoBackground
 
 
     def removeVines(self, image):
         HSVimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)   # convert color space for thresholding
-        #cv2.imshow("HSVImage", HSVimage)
-        #cv2.waitKey(0) 
         # mask out vine
         # Guide: https://www.youtube.com/watch?v=We6CQHhhOFo&t=136s
         min = numpy.array([90, 000, 40])
         max = numpy.array([255, 255, 255]) 
         vinemask = cv2.inRange(HSVimage, min, max) # threshold
-        #cv2.imshow("vinemask", vinemask)
-        #cv2.waitKey(0) 
         self.saveImage(vinemask)
 
         # Remove odd small spots
@@ -359,31 +349,23 @@ class image_capture:
                 vinemask_updated[output == i + 1] = 255
 
         vinemask_updated = vinemask_updated.astype(numpy.uint8) # reconvert to uint8
-        #cv2.imshow("vinemask updated", vinemask_updated)
-        #cv2.waitKey(0) 
 
         # Increase size of remaining pixels
         vinemask_updated = cv2.dilate(vinemask_updated, numpy.ones((15, 15)), iterations = 1) # expand mask
-        #cv2.imshow("diliated", vinemask_updated)
-        #cv2.waitKey(0) 
+
 
         # Add kernal to complete the morphEx operation using morph_elispse (simular shape to grapes)
         # Ref: https://www.pyimagesearch.com/2021/04/28/opencv-morphological-operations/
 	    # construct a eliptic kernel (same shape as grapes) from the current size and then apply an "opening" operation to close the gaps
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
         morph_vinemask = cv2.morphologyEx(vinemask_updated, cv2.MORPH_OPEN, kernel)
-        #cv2.imshow("MorphEx vinemask", morph_vinemask)
-        #cv2.waitKey(0)
 
         # obtain threshold result
         grapeBunchImage = cv2.bitwise_and(HSVimage, HSVimage, mask=morph_vinemask) 
-        #cv2.imshow("grapeBunchImage with MorphEx ANDED HSV image", grapeBunchImage)
-        #cv2.waitKey(0) 
 
         # Detect the keypoints of the grape bunches in the image and count them
         im_detectGrapes_with_keypoints, keypoints = self.detectGrapes(grapeBunchImage, morph_vinemask)
-        #cv2.imshow("Final Grape bunch Image", im_detectGrapes_with_keypoints)
-        #cv2.waitKey(0)
+
         self.saveImage(im_detectGrapes_with_keypoints)
         
         return im_detectGrapes_with_keypoints
@@ -418,8 +400,7 @@ class image_capture:
         grape_bunches_in_image = len(keypoints)
         if(grape_bunches_in_image != 0): # If a blob is detected, print how many there were
             print('Grape bunches = ', grape_bunches_in_image)
-        #cv2.imshow("detect keypoints image", im_with_keypoints)
-        #cv2.waitKey(0)
+
         taken_image = True # flags when an image is taken
         return im_with_keypoints, keypoints
 
@@ -429,7 +410,7 @@ class image_capture:
         imagepath = 'bunch'+str(time)+'.jpg' 
         print('saving to ',imagepath)
         cv2.imwrite(imagepath, image)
-        #imshow("cv2", image)
+
         rospy.sleep(1)
 
 
