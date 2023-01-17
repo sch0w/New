@@ -13,6 +13,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import enum
 import math
 import numpy
+import cv2
 
 from cv_bridge import CvBridge, CvBridgeError
 from datetime import datetime
@@ -219,7 +220,7 @@ def get_base_truth(bot_data):
 
     if beacon_pose is not None:
         goal_distance = math.sqrt(pow(bot_pose.position.y - beacon_pose.position.y, 2) + pow(bot_pose.position.x - beacon_pose.position.x, 2))
-        print(goal_distance)
+        # print(goal_distance)
         if goal_distance <= goal_distance_threshold:
             currentBotState = BotState.ROTATE_TO_VINES
             beacon_found = True
@@ -407,7 +408,7 @@ class image_capture:
     def saveImage(self, image):
         # Save OpenCV2 image as jpeg 
         time = datetime.now()
-        imagepath = 'bunch'+str(time)+'.jpg' 
+        imagepath = "/src/images"+'bunch'+str(time)+'.jpg' 
         print('saving to ',imagepath)
         cv2.imwrite(imagepath, image)
 
