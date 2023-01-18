@@ -131,7 +131,7 @@ The algorithm is controlled by being in one of the following state
     1. State will then change to `TAKE_IMAGE`
 
 1. `TAKE_IMAGE` : Capture image and initiate bunch counting procedure
-    1.This state happens after `ROTATE_TO"_VINES`, which means Thorvald have already reached `Homing_Beacon` and rotated for the camera to face vines directly
+    1. This state happens after `ROTATE_TO"_VINES`, which means Thorvald have already reached `Homing_Beacon` and rotated for the camera to face vines directly
 
 ## Grape Bunch Counting Process Overview
 
