@@ -16,8 +16,8 @@ def talker():
 
     # ROS Parameters
     # Reference on setting params: https://campus-rover.gitbook.io/lab-notebook/faq/using-args-params-roslaunch 
-    home_pose.pose.position.x = 4 #UP/DOWN
-    home_pose.pose.position.y = -5.5 #LEFT/RIGHT
+    home_pose.pose.position.x = 3 #UP/DOWN
+    home_pose.pose.position.y = -5 #LEFT/RIGHT
     home_pose.pose.position.z = 0 #DONT TOUCH
 
     # Publish homing beacon until it is shutdown
