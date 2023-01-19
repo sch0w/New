@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # Reference on bug2 algorithm: https://github.com/bipul93/ros-bug2/blob/master/scripts/bot.py
-#this is the backup version without opencv redesigns
 import rospy, sys
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import LaserScan, Image
@@ -102,10 +101,10 @@ def goal_seek():
 
     # Avoiding obsticles
     obstacle_in_front = numpy.any((zone_F < 1.5)) or numpy.any((zone_FR < 1.5)) or numpy.any((zone_FL < 1.5)) 
-    # distance of 1.5 is the lowest it should get to move safely around the wall with a 2m offset
+    # distance must be at least 1.5 to move safely around the wall with a 2m offset AND has to be adjusted for other maps with irregular 'wall'shapes
     # once we are in a line distance position. 1m is the lowest and with trials Thorvald's side corners got caught on the hedge when the becaon is positioned very close to it
     # Or find the minimum value in this zone. or maybe numpy.any would be faster
-    print("obsticle in front?", obstacle_in_front)
+    print("obsticle in front?", obstacle_in_front) #print for obsticle detection
     if obstacle_in_front:
         twist.linear.x = 0
         wall_hit_point = bot_pose.position
@@ -187,7 +186,7 @@ def rotate_to_vines():
 # ------------- helper functions -------------
 
 
-# Angles are from 180 to -180 so nneed to nrolaise tio this rather than 320 etc
+# Angles are from 180 to -180 hence normalize this
 def normalize(angle):
     if math.fabs(angle) > math.pi:
         angle = angle - (2 * math.pi * angle) / (math.fabs(angle))
@@ -217,7 +216,7 @@ def get_base_truth(bot_data):
     bot_pose = bot_data.pose.pose
     if not init_config_complete:
         check_init_config()
-
+# ROTATE TO VINES when goal is met
     if beacon_pose is not None:
         goal_distance = math.sqrt(pow(bot_pose.position.y - beacon_pose.position.y, 2) + pow(bot_pose.position.x - beacon_pose.position.x, 2))
         # print(goal_distance)
@@ -243,7 +242,7 @@ def process_sensor_info(data):
 
 
 # ------------- getting into capture position -------------
-
+# bot position
 def check_init_config():
     global bot_pose, beacon_pose, init_config_complete, init_bot_pose
     if bot_pose is not None and beacon_pose is not None:
@@ -257,6 +256,7 @@ def bot_bug2():
     global bot_motion, currentBotState, bot_pose
     bot_motion = rospy.Publisher("/thorvald_001/teleop_joy/cmd_vel", Twist, queue_size=10)
     rate = rospy.Rate(20)
+    global taken_image 
     while not taken_image:
         if not init_config_complete:
             return
@@ -301,7 +301,7 @@ class image_capture:
             cv2_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        else:
+        else: #process image tally image count
             img_noBackground = self.removeBackGround(cv2_img) # remove background on start
             img_removeVines = self.removeVines(img_noBackground)
             image_count = image_count + 1
@@ -408,11 +408,9 @@ class image_capture:
     def saveImage(self, image):
         # Save OpenCV2 image as jpeg 
         time = datetime.now()
-        imagepath = "/src/images"+'bunch'+str(time)+'.jpg' 
+        imagepath =r"/home/ubuntu/Desktop/vineyard_simulation/src/assignment/"+'bunch'+str(time)+'.jpg' 
         print('saving to ',imagepath)
         cv2.imwrite(imagepath, image)
-
-        rospy.sleep(1)
 
 
 # ------------- main program -------------
@@ -436,3 +434,4 @@ if __name__ == '__main__':
        
     except rospy.ROSInterruptException:
         pass
+
